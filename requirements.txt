@@ -1,7 +1,5 @@
+langchain
+langchain-openai
+langchain-google-genai
 streamlit
-openai
-google-cloud-texttospeech
-python-dotenv  # Optional
-
-
-
+streamlit-chat
