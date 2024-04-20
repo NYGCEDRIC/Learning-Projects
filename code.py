@@ -17,7 +17,11 @@ def translate_text(text, target_lang):
         "targetLanguage": target_lang
     }
     response = requests.post(TRANSLATE_URL, headers=headers, json=data)
-    return response.json().get('translatedText', 'Translation failed')
+    if response.status_code == 200:
+        return response.json().get('translatedText', 'Translation failed')
+    else:
+        st.error(f"Failed to translate text: {response.text}")
+        return None
 
 def convert_text_to_speech(text, language):
     """Convert translated text to speech using ElevenLabs API."""
@@ -30,7 +34,12 @@ def convert_text_to_speech(text, language):
         "model": language
     }
     response = requests.post(SPEECH_URL, headers=headers, json=data)
-    return response.json().get('audioUrl', 'Failed to convert text to speech')
+    if response.status_code == 200:
+        return response.json().get('audioUrl', 'Failed to convert text to speech')
+    else:
+        st.error(f"Failed to generate audio: {response.text}")
+        return None
+
 
 # Streamlit user interface
 st.title("Translation and Text-to-Speech Chatbot")
