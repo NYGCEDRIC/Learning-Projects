@@ -6,7 +6,7 @@ from streamlit_chat import message
 # Assuming other imports and initializations are already done
 
 # Set up ElevenLabs API credentials securely
-API_KEY = st.secrets["e014db3674e9b676cf019f33a018ff57"]
+API_KEY = st.secrets["ELEVENLABS_API_KEY"]
 
 def convert_text_to_speech(text, voice="en-US-Wavenet-A"):
     """Convert text to speech using ElevenLabs API."""
