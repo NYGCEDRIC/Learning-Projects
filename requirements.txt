@@ -1,4 +1,7 @@
-google-cloud-translate
+streamlit
+openai
 google-cloud-texttospeech
+python-dotenv  # Optional
+
 
 
