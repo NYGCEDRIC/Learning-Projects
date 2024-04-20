@@ -1,45 +1,51 @@
 import streamlit as st
 import requests
-import json
-from streamlit_chat import message
 
-# Assuming other imports and initializations are already done
-
-# Set up ElevenLabs API credentials securely
+# ElevenLabs API credentials and endpoints
 API_KEY = st.secrets["ELEVENLABS_API_KEY"]
+TRANSLATE_URL = "https://api.elevenlabs.io/translate"
+SPEECH_URL = "https://api.elevenlabs.io/speech"
 
-def convert_text_to_speech(text, voice="en-US-Wavenet-A"):
-    """Convert text to speech using ElevenLabs API."""
-    url = "https://api.elevenlabs.io/speech"
+def translate_text(text, target_lang):
+    """Translate text to the specified language using ElevenLabs API."""
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
     data = {
         "text": text,
-        "model": voice
+        "targetLanguage": target_lang
     }
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-        return response.json()['audioUrl']
-    else:
-        return "Error in text-to-speech conversion"
+    response = requests.post(TRANSLATE_URL, headers=headers, json=data)
+    return response.json().get('translatedText', 'Translation failed')
 
-# Initialize session state variables for storing messages if they don't exist
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
+def convert_text_to_speech(text, language):
+    """Convert translated text to speech using ElevenLabs API."""
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "text": text,
+        "model": language
+    }
+    response = requests.post(SPEECH_URL, headers=headers, json=data)
+    return response.json().get('audioUrl', 'Failed to convert text to speech')
 
-# Your existing code to handle chat input and responses
-if prompt := st.chat_input("Your question"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    # Assuming 'conversation' and 'response' handling here
-    response = "Simulated response"  # Replace with your response logic
-    st.session_state.messages.append({"role": "assistant", "content": response})
+# Streamlit user interface
+st.title("Translation and Text-to-Speech Chatbot")
 
-# Display chat history
-for message in st.session_state.messages:
-    with st.container():
-        if message["role"] == "user":
-            st.write("User: " + message["content"])
+input_text = st.text_input("Enter text to translate:")
+target_language = st.selectbox("Choose the language to translate to:", ["fr", "de", "es", "it", "jp"])
+output_mode = st.radio("Do you want the output as text or audio?", ["Text", "Audio"])
+
+if st.button("Translate"):
+    translated_text = translate_text(input_text, target_language)
+    if output_mode == "Text":
+        st.text_area("Translated Text:", value=translated_text, height=200)
+    elif output_mode == "Audio":
+        audio_url = convert_text_to_speech(translated_text, target_language)
+        if "Failed" not in audio_url:
+            st.audio(audio_url)
         else:
-            st.write("Assistant: " + message["content"])
+            st.error("Failed to generate audio. Please try again.")
