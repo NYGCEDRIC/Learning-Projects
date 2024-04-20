@@ -1,47 +1,47 @@
 import streamlit as st
-import requests
-import json
 from streamlit_chat import message
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.chains import ConversationChain
+from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+from gtts import gTTS
+import os
 
-# Assuming other imports and initializations are already done
+# Initialize session state variables
+if 'buffer_memory' not in st.session_state:
+    st.session_state.buffer_memory = ConversationBufferWindowMemory(k=3, return_messages=True)
 
-# Set up ElevenLabs API credentials securely
-API_KEY = st.secrets["e014db3674e9b676cf019f33a018ff57"]
+if "messages" not in st.session_state.keys(): # Initialize the chat message history
+    st.session_state.messages = [
+        {"role": "assistant", "content": "How can I help you today?"}
+    ]
 
-def convert_text_to_speech(text, voice="en-US-Wavenet-A"):
-    """Convert text to speech using ElevenLabs API."""
-    url = "https://api.elevenlabs.io/speech"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "text": text,
-        "model": voice
-    }
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-        return response.json()['audioUrl']
-    else:
-        return "Error in text-to-speech conversion"
+# Initialize ChatGoogleGenerativeAI and ConversationChain
+llm = ChatGoogleGenerativeAI(model = "gemini-pro")
+conversation = ConversationChain(memory=st.session_state.buffer_memory, llm=llm)
 
-# Modify your chat handling to include a text-to-speech option
-if prompt := st.chat_input("Your question"):
+# Create user interface
+st.title("🗣️ Conversational Chatbot")
+st.subheader("㈻ Simple Chat Interface for LLMs by Cedric and Chisunta")
+
+if prompt := st.chat_input("Your question"): # Prompt for user input and save to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Handle translation or normal conversation here
-    response = conversation.predict(input=prompt)
-    message = {"role": "assistant", "content": response}
-    st.session_state.messages.append(message)
 
-    # Option to convert response to speech
-    if st.button("Hear it"):
-        audio_url = convert_text_to_speech(response)
-        if "Error" not in audio_url:
-            st.audio(audio_url)
-        else:
-            st.error("Failed to convert text to speech.")
-
-# Display chat history
-for message in st.session_state.messages:
+for message in st.session_state.messages: # Display the prior chat messages
     with st.chat_message(message["role"]):
         st.write(message["content"])
+
+# If last message is not from assistant, generate a new response
+if st.session_state.messages[-1]["role"] != "assistant":
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = conversation.predict(input = prompt)
+            st.write(response)
+            message = {"role": "assistant", "content": response}
+            st.session_state.messages.append(message) # Add response to message history
+
+# Add a button for text-to-speech conversion
+if st.button("Convert to Audio"):
+    # Convert the last message to speech
+    tts = gTTS(text=response, lang='en')
+    tts.save("response.mp3")
+    st.audio("response.mp3")
