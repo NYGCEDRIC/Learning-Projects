@@ -1,36 +1,37 @@
 import streamlit as st
 import openai
 
-# Load your OpenAI API key securely
+# Assuming the API key is stored in Streamlit's secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 def translate_text(text, source_lang, target_lang):
-    """ Translate text from source_lang to target_lang using OpenAI's GPT-4. """
+    """Translate text from source_lang to target_lang using OpenAI's latest API."""
     prompt = f"Translate the following text from {source_lang} to {target_lang}: {text}"
-    response = openai.Completion.create(
-        model="text-davinci-003",  # Replace with "gpt-4" once available in your account
-        prompt=prompt,
-        max_tokens=512,
-        temperature=0.5,
-        top_p=1.0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0
-    )
-    return response.choices[0].text.strip()
+    try:
+        response = openai.Completion.create(
+            model="gpt-3.5-turbo",  # Change this to "gpt-4" if available and appropriate
+            prompt=prompt,
+            max_tokens=512,
+            temperature=0.5,
+            top_p=1.0,
+            n=1
+        )
+        return response['choices'][0]['text'].strip()
+    except Exception as e:
+        st.error(f"Failed to translate: {str(e)}")
+        return ""
 
+# Streamlit application setup
 st.title('Real-time Language Translation Chatbot')
-st.write('This chatbot translates your input text to a selected language using OpenAI GPT-4.')
+st.write('This chatbot translates your input text to a selected language using OpenAI.')
 
-# Select source and target languages
-source_lang = st.selectbox('Select source language:', ['English', 'Spanish', 'French', 'German', 'Chinese'])
-target_lang = st.selectbox('Select target language:', ['Spanish', 'English', 'French', 'German', 'Chinese'])
+source_lang = st.selectbox('Source language:', ['English', 'Spanish', 'French', 'German', 'Chinese'])
+target_lang = st.selectbox('Target language:', ['Spanish', 'English', 'French', 'German', 'Chinese'])
 
-# User input for translation
-user_input = st.text_area("Enter the text you want to translate:", height=200)
+user_input = st.text_area("Enter text to translate:")
 if st.button('Translate'):
     if user_input:
         translated_text = translate_text(user_input, source_lang, target_lang)
-        st.text_area("Translated Text:", translated_text, height=200)
+        st.text_area("Translated Text:", translated_text)
     else:
-        st.error("Please enter some text to translate.")
-
+        st.error("Please enter text to translate.")
