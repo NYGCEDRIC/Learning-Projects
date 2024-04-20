@@ -25,15 +25,19 @@ def text_to_speech(text, language_code):
 # OpenAI API key setup
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# Function to translate text using ChatGPT
 def translate_text(input_text, target_language):
-    prompt = f"Translate this text to {target_language}: {input_text}"
-    response = openai.Completion.create(
-        engine="davinci",
-        prompt=prompt,
-        max_tokens=500
-    )
-    return response.choices[0].text.strip()
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a translation assistant."},
+                {"role": "user", "content": f"Translate this to {target_language}: {input_text}"}
+            ]
+        )
+        return response['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return None
 
 # Streamlit interface
 st.title("Real-time Language Translation Chatbot")
