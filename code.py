@@ -25,23 +25,21 @@ def convert_text_to_speech(text, voice="en-US-Wavenet-A"):
     else:
         return "Error in text-to-speech conversion"
 
-# Modify your chat handling to include a text-to-speech option
+# Initialize session state variables for storing messages if they don't exist
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+
+# Your existing code to handle chat input and responses
 if prompt := st.chat_input("Your question"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Handle translation or normal conversation here
-    response = conversation.predict(input=prompt)
-    message = {"role": "assistant", "content": response}
-    st.session_state.messages.append(message)
-
-    # Option to convert response to speech
-    if st.button("Hear it"):
-        audio_url = convert_text_to_speech(response)
-        if "Error" not in audio_url:
-            st.audio(audio_url)
-        else:
-            st.error("Failed to convert text to speech.")
+    # Assuming 'conversation' and 'response' handling here
+    response = "Simulated response"  # Replace with your response logic
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
 # Display chat history
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
+    with st.container():
+        if message["role"] == "user":
+            st.write("User: " + message["content"])
+        else:
+            st.write("Assistant: " + message["content"])
